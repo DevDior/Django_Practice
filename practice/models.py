@@ -21,7 +21,7 @@ class User(models.Model):
     blocked = models.BooleanField(default=False)
     
 class Community(models.Model):
-    author_id = models.ForeignKey('User', on_delete=models.CASCADE, db_column='autor_id')
+    author_id = models.ForeignKey('User', on_delete=models.CASCADE, db_column='author_id')
     
 class Subject(models.Model):
     community_id = models.ForeignKey('Community', on_delete=models.CASCADE, db_column='community_id')
@@ -30,9 +30,9 @@ class Subject(models.Model):
 class Post(models.Model):
     title = models.CharField(max_length=100)
     text = models.TextField()
-    view_count = models.IntegerField()
+    view_count = models.IntegerField(default=0)
     created_at = models.DateField(default=timezone.now)
-    writer = models.ForeignKey('User', on_delete=models.CASCADE, db_column='writer_id')
+    writer = models.ForeignKey('User', on_delete=models.CASCADE, db_column='writer')
     community_id = models.ForeignKey('Community', on_delete=models.CASCADE, db_column='community_id')
     
     class Meta:

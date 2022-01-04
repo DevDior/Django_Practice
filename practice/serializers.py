@@ -6,29 +6,25 @@ from .models import *
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ('user_id', 'user_pw', 'user_email', 'user_name', 'user_nick_name', 'user_phone_num', 'sex', 'blocked')
+        fields = '__all__'
+
+class CommunitySerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Community
+        fields = '__all__'
 
 class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subject
-        fields = ('id', 'community_id', 'subject')
+        fields = '__all__'
+        
+class PostSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Post
+        fields = '__all__'
         
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment
         fields = '__all__'
-        
-class PostSerializer(serializers.ModelSerializer):
-    comments = CommentSerializer(many=True, read_only=True)
-    subjects = SubjectSerializer()
-    class Meta:
-        model = Post
-        fields = ('id', 'title', 'text', 'view_count', 'created_at', 'writer', 'community_id', 'comments')
-        
-class CommunitySerializer(serializers.ModelSerializer):
-    posts = PostSerializer(many=True, read_only=True)
-    subjects = SubjectSerializer(many=True, read_only=True)
-    
-    class Meta:
-        model = Community
-        fields = ('id', 'author_id', 'subjects', 'posts')
