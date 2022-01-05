@@ -87,12 +87,17 @@ def post_list(request, community_id):
         return JsonResponse(serializer.errors, status=400)
 
 def post_detail(request, community_id, pk):
-    post = get_object_or_404(Post, community_id=community_id, id=pk)
     if request.method == 'GET':
+        post = get_object_or_404(Post, community_id=community_id, id=pk)
         post.view_count += 1
         post.save()
-        serializer = PostSerializer(post)
-        return JsonResponse(serializer.data, safe=False)
+        post_serializer = PostSerializer(post)
+        
+        comments = Comment.objects.filter(post_id=pk)
+        comments_serializer = CommentSerializer(comments, many=True)
+
+        #data = post_serializer.data.update(comments_serializer.data)
+        return JsonResponse(data, safe=False)
 
 @csrf_exempt
 def post_delete(request):
@@ -102,24 +107,21 @@ def post_delete(request):
     if request.method == 'DELETE':
         post.delete()
         return redirect('post_list')
-        
-def comment_list(request):
-    if request.method == 'GET':
-        comments = Comment.objects.all()
-        serializer = CommentSerializer(comments, many=True)
-        return JsonResponse(serializer.data, safe=False)
-    
-    elif request.method == 'POST':
+
+@csrf_exempt
+def comment_create(request):
+    if request.method == 'POST':
         data = JSONParser().parse(request)
         serializer = CommentSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
-            return JsonResponse(serializer.data, status=201)
+            return redirect('post_detail', data['community_id'], data['post_id'])
         return JsonResponse(serializer.errors, status=400)
         
-def comment_delete(request):
+@csrf_exempt
+def comment_delete(request, user_id, pk):
     data = JSONParser().parse(request)
-    comment = get_object_or_404(Comment, id=data['id'], user_id=data['user_id'])
+    comment = get_object_or_404(Comment, id=pk, user_id=data['user_id'])
     if request.method == 'DELETE':
         comment.delete()
         return redirect('post_detail')

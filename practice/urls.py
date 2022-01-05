@@ -8,6 +8,8 @@ urlpatterns = [
     path('<int:pk>', views.community_detail, name='community_detail'),
     path('community_delete', views.community_delete),
     path('post/<int:community_id>', views.post_list, name='post_list'),
-    path('post/<int:community_id>/<int:pk>', views.post_detail),
+    path('post/<int:community_id>/<int:pk>', views.post_detail, name='post_detail'),
     path('post_delete', views.post_delete),
+    path('comment_create', views.comment_create),
+    path('comment_delete/<str:user_id>/<int:pk>', views.comment_delete)
 ]
