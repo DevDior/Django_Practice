@@ -9,9 +9,13 @@ class UserSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CommunitySerializer(serializers.ModelSerializer):
-    
     class Meta:
         model = Community
+        fields = '__all__'
+
+class Blocked_UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Blocked_User
         fields = '__all__'
 
 class SubjectSerializer(serializers.ModelSerializer):

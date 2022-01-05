@@ -1,3 +1,4 @@
+from django.http import HttpResponse
 from django.db.models.query import QuerySet
 from django.shortcuts import get_object_or_404, get_list_or_404, redirect
 from django.views.decorators.csrf import csrf_exempt
@@ -16,6 +17,32 @@ def sign_up(request):
             return redirect('community_list')
         return JsonResponse(serializer.error, status=400)
 
+@csrf_exempt
+def block(request):
+    data = JSONParser().parse(request)
+    
+    if request.method == 'POST':
+        community = get_object_or_404(Community, id=data['community_id'])
+        
+        if data['user_id'] == community.author_id:
+            serializer = Blocked_UserSerializer(data=data)
+            if serializer.is_valid():
+                serializer.save()
+                return redirect('community_detail', data['community_id'])
+            return JsonResponse(serializer.errors, status=400)
+        else:
+            return HttpResponse("Permission denied")
+    
+    elif request.method == 'DELETE':
+        community = get_object_or_404(Community, id=data['community_id'])
+        
+        if data['user_id'] == community.author_id:
+            blocked_user = get_object_or_404(Blocked_User, user_id=data['blocked_user_id'])
+            blocked_user.delete()
+            return redirect('community_detail', data['community_id'])
+        else:
+            return HttpResponse("Permission denied")
+        
 @csrf_exempt
 def community_list(request):
     if request.method == 'GET':
@@ -45,9 +72,9 @@ def community_delete(request):
         return redirect('community_list')
     
 @csrf_exempt
-def post_list(request, community_pk):
+def post_list(request, community_id):
     if request.method == 'GET':
-        posts = get_list_or_404(Post, community_id=community_pk)
+        posts = get_list_or_404(Post, community_id=community_id)
         serializer = PostSerializer(posts, many=True)
         return JsonResponse(serializer.data, safe=False)
     
@@ -56,16 +83,15 @@ def post_list(request, community_pk):
         serializer = PostSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
-            return redirect('post_list', community_pk)
+            return redirect('post_list', community_id)
         return JsonResponse(serializer.errors, status=400)
 
-def post_detail(request, community_pk, pk):
-    post = get_object_or_404(Post, community_id=community_pk, id=pk)
+def post_detail(request, community_id, pk):
+    post = get_object_or_404(Post, community_id=community_id, id=pk)
     if request.method == 'GET':
-        serializer = PostSerializer(post, )
-        serializer.data['view_count'] += 1
-        if serializer.is_valid():
-            serializer.save()
+        post.view_count += 1
+        post.save()
+        serializer = PostSerializer(post)
         return JsonResponse(serializer.data, safe=False)
 
 @csrf_exempt
