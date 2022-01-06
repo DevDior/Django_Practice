@@ -24,14 +24,19 @@ def block(request):
     if request.method == 'POST':
         community = get_object_or_404(Community, id=data['community_id'])
         
-        if data['user_id'] == community.author_id:
+        if data['author_id'] == community.author_id_id:
+            posts = Post.objects.filter(writer=data['blocked_user_id'], community_id=data['community_id'])
+            comments = Comment.objects.filter(user_id_id=data['blocked_user_id'], post_id_id__community_id_id=data['community_id'])
+            posts.delete()
+            comments.delete()
+            
             serializer = Blocked_UserSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
-                return redirect('community_detail', data['community_id'])
+                return redirect('community_detail', data['community_id'], data['author_id'])
             return JsonResponse(serializer.errors, status=400)
         else:
-            return HttpResponse("Permission denied")
+            return HttpResponse("Don't block user, Permission denied")
     
     elif request.method == 'DELETE':
         community = get_object_or_404(Community, id=data['community_id'])
@@ -41,7 +46,7 @@ def block(request):
             blocked_user.delete()
             return redirect('community_detail', data['community_id'])
         else:
-            return HttpResponse("Permission denied")
+            return HttpResponse("Don't unblock user, Permission denied")
         
 @csrf_exempt
 def community_list(request):
@@ -58,11 +63,13 @@ def community_list(request):
             return redirect('community_list')
         return JsonResponse(serializer.errors, status=400)
 
-def community_detail(request, pk):
-    if request.method == 'GET':
+def community_detail(request, user_id, pk):
+    if request.method == 'GET' and Blocked_User.objects.get(blocked_user_id_id=user_id).exists() == False:
         community = get_object_or_404(Community, id=pk)
         serializer = CommunitySerializer(community)
         return JsonResponse(serializer.data, safe=False)
+    elif request.method == 'GET' and Blocked_User.objects.get(blocked_user_id_id=user_id).exists() == True:
+        return HttpResponse("Your id blocked")
     
 def community_delete(request):
     data = JSONParser().parse(request)
@@ -91,13 +98,8 @@ def post_detail(request, community_id, pk):
         post = get_object_or_404(Post, community_id=community_id, id=pk)
         post.view_count += 1
         post.save()
-        post_serializer = PostSerializer(post)
-        
-        comments = Comment.objects.filter(post_id=pk)
-        comments_serializer = CommentSerializer(comments, many=True)
-
-        #data = post_serializer.data.update(comments_serializer.data)
-        return JsonResponse(data, safe=False)
+        serializer = PostSerializer(post)
+        return JsonResponse(serializer.data, safe=False)
 
 @csrf_exempt
 def post_delete(request):

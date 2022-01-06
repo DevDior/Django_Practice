@@ -23,11 +23,11 @@ class Community(models.Model):
     author_id = models.ForeignKey('User', on_delete=models.CASCADE, db_column='author_id')
     
 class Blocked_User(models.Model):
-    community_id = models.ForeignKey('Community', on_delete=models.CASCADE, db_column='community_id')
+    community_id = models.ForeignKey('Community', on_delete=models.CASCADE, related_name='blocked_users', db_column='community_id')
     blocked_user_id = models.ForeignKey('User', on_delete=models.CASCADE, db_column='user_id')
     
 class Subject(models.Model):
-    community_id = models.ForeignKey('Community', on_delete=models.CASCADE, db_column='community_id')
+    community_id = models.ForeignKey('Community', on_delete=models.CASCADE, related_name='subjects', db_column='community_id')
     subject = models.CharField(max_length=50)
 
 class Post(models.Model):
@@ -36,10 +36,10 @@ class Post(models.Model):
     view_count = models.PositiveIntegerField(default=0)
     created_at = models.DateField(default=timezone.now)
     writer = models.ForeignKey('User', on_delete=models.CASCADE, db_column='writer')
-    community_id = models.ForeignKey('Community', on_delete=models.CASCADE, db_column='community_id')
+    community_id = models.ForeignKey('Community', on_delete=models.CASCADE, related_name='posts', db_column='community_id')
         
 class Comment(models.Model):
     user_id = models.ForeignKey('User', on_delete=models.CASCADE, db_column='user_id')
-    post_id = models.ForeignKey('Post', on_delete=CASCADE, db_column='post_id')
+    post_id = models.ForeignKey('Post', on_delete=CASCADE, related_name='comments', db_column='post_id')
     text = models.TextField()
     created_at = models.DateField(default=timezone.now)
