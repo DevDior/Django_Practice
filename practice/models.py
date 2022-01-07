@@ -37,6 +37,7 @@ class Post(models.Model):
     created_at = models.DateField(default=timezone.now)
     writer = models.ForeignKey('User', on_delete=models.CASCADE, db_column='writer')
     community_id = models.ForeignKey('Community', on_delete=models.CASCADE, related_name='posts', db_column='community_id')
+      
         
 class Comment(models.Model):
     user_id = models.ForeignKey('User', on_delete=models.CASCADE, db_column='user_id')
