@@ -82,9 +82,12 @@ def community_detail(request, pk, user_id):
         return HttpResponse("Your id blocked")
     
     elif request.method =='DELETE':
-        community = get_object_or_404(Community, id=pk, author_id=user_id)
-        community.delete()
-        return redirect('community_list')
+        community = get_object_or_404(Community, id=pk)
+        if community.author_id_id == user_id:
+            community.delete()
+            return redirect('community_list')
+        else:
+            return HttpResponse("You don't have delete permission")
     
 @csrf_exempt
 def post_list(request, community_id):
@@ -112,36 +115,29 @@ def post_detail(request, community_id, pk, user_id):
         return JsonResponse(serializer.data, safe=False)
 
     elif request.method == 'DELETE':
-        post = Post.objects.filter(community_id=community_id, id=pk).first()
-        if post.exists() == True and (post.writer == user_id or post.community_id.author_id == user_id):
+        post = get_object_or_404(Post, id=pk)
+        if post.writer_id == user_id or post.community_id.author_id_id == user_id:
             post.delete()
-            return redirect('post_list')
-        # err
+            return redirect('post_list', community_id)
         else:
-            return HttpResponse("Wrong Approach")
-    
-def post_delete(request):
-    data = JSONParser().parse(request)
-    queryset = Post.objects.filter(writer=data['user_id']) | Post.objects.filter(community_id=data['community_id'])
-    post = get_object_or_404(queryset, id=data['id'])
-    if request.method == 'DELETE':
-        post.delete()
-        return redirect('post_list')
+            return HttpResponse("you don't have delete permission")
 
 @csrf_exempt
-def comment_create(request):
+def comment_create(request, community_id, pk):
     if request.method == 'POST':
         data = JSONParser().parse(request)
         serializer = CommentSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
-            return redirect('post_detail', data['community_id'], data['post_id'])
+            return redirect('post_detail', community_id, pk, data['user_id'])
         return JsonResponse(serializer.errors, status=400)
         
 @csrf_exempt
 def comment_delete(request, user_id, pk):
-    data = JSONParser().parse(request)
-    comment = get_object_or_404(Comment, id=pk, user_id=data['user_id'])
+    comment = get_object_or_404(Comment, id=pk, user_id=user_id)
+    post = get_object_or_404(Post, id=comment.post_id_id)
+    post_id = post.id
+    communtiy_id = post.community_id_id
     if request.method == 'DELETE':
         comment.delete()
-        return redirect('post_detail')
+        return redirect('post_detail', communtiy_id, post_id, user_id)
