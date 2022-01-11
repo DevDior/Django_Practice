@@ -18,30 +18,30 @@ def sign_up(request):
         return JsonResponse(serializer.error, status=400)
 
 @csrf_exempt
-def block(request):
+def block(request, user_id):
     data = JSONParser().parse(request)
     
     if request.method == 'POST':
         community = get_object_or_404(Community, id=data['community_id'])
         
-        if data['author_id'] == community.author_id_id:
+        if user_id == community.author_id_id:
             # 이미 user가 blocke된 경우
             if Blocked_User.objects.filter(blocked_user_id_id=data['blocked_user_id'], community_id_id=data['community_id']).exists() == True:
                 return HttpResponse("Already blocked user")
             
             # 커뮤니티 주인이 자기를 block할 경우    
-            if data['author_id'] == data['blocked_user_id']:
+            if user_id == data['blocked_user_id']:
                 return HttpResponse("Please cherish yourself.")
         
-            posts = Post.objects.filter(writer=data['blocked_user_id'], community_id=data['community_id'])
-            comments = Comment.objects.filter(user_id_id=data['blocked_user_id'], post_id_id__community_id_id=data['community_id'])
+            posts = Post.objects.filter(writer_id=data['blocked_user_id'], community_id_id=data['community_id'])
+            comments = Comment.objects.filter(user_id=data['blocked_user_id'], post_id__community_id_id=data['community_id'])
             posts.delete()
             comments.delete()
             
             serializer = Blocked_UserSerializer(data=data)
             if serializer.is_valid():
                 serializer.save()
-                return redirect('community_detail', data['community_id'], data['author_id'])
+                return redirect('community_detail', data['community_id'], user_id)
             return JsonResponse(serializer.errors, status=400)
         else:
             return HttpResponse("Don't block user, Permission denied")
@@ -49,7 +49,7 @@ def block(request):
     elif request.method == 'DELETE':
         community = get_object_or_404(Community, id=data['community_id'])
         
-        if data['user_id'] == community.author_id:
+        if user_id == community.author_id_id:
             blocked_user = get_object_or_404(Blocked_User, user_id=data['blocked_user_id'])
             blocked_user.delete()
             return redirect('community_detail', data['community_id'])
@@ -73,12 +73,12 @@ def community_list(request):
 
 @csrf_exempt
 def community_detail(request, pk, user_id):
-    if request.method == 'GET' and Blocked_User.objects.filter(blocked_user_id_id=user_id).exists() == False:
+    if request.method == 'GET' and Blocked_User.objects.filter(blocked_user_id_id=user_id, community_id=pk).exists() == False:
         community = get_object_or_404(Community, id=pk)
         serializer = CommunitySerializer(community)
         return JsonResponse(serializer.data, safe=False)
     
-    elif request.method == 'GET' and Blocked_User.objects.filter(blocked_user_id_id=user_id).exists() == True:
+    elif request.method == 'GET' and Blocked_User.objects.filter(blocked_user_id_id=user_id, community_id=pk).exists() == True:
         return HttpResponse("Your id blocked")
     
     elif request.method =='DELETE':
@@ -107,13 +107,16 @@ def post_list(request, community_id):
 
 @csrf_exempt
 def post_detail(request, community_id, pk, user_id):
-    if request.method == 'GET':
+    if request.method == 'GET' and Blocked_User.objects.filter(blocked_user_id_id=user_id, community_id=community_id).exists() == False:
         post = get_object_or_404(Post, community_id=community_id, id=pk)
         post.view_count += 1
         post.save()
         serializer = PostSerializer(post)
         return JsonResponse(serializer.data, safe=False)
-
+    
+    elif request.method =='GET' and Blocked_User.objects.filter(blocked_user_id_id=user_id, community_id=community_id).exists() == True:
+        return HttpResponse("Your id blocked")
+    
     elif request.method == 'DELETE':
         post = get_object_or_404(Post, id=pk)
         if post.writer_id == user_id or post.community_id.author_id_id == user_id:
