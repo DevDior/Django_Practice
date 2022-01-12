@@ -18,6 +18,13 @@ def sign_up(request):
         return JsonResponse(serializer.error, status=400)
 
 @csrf_exempt
+def check_user(request, user_id, password):
+    if request.method == 'GET':
+        user = get_object_or_404(User, user_id=user_id, user_pw=password)
+        serializer = UserSerializer(user)
+        return JsonResponse(serializer.data, safe=False)
+    
+@csrf_exempt
 def block(request, user_id):
     data = JSONParser().parse(request)
     
@@ -50,9 +57,9 @@ def block(request, user_id):
         community = get_object_or_404(Community, id=data['community_id'])
         
         if user_id == community.author_id_id:
-            blocked_user = get_object_or_404(Blocked_User, user_id=data['blocked_user_id'])
+            blocked_user = get_object_or_404(Blocked_User, blocked_user_id_id=data['blocked_user_id'])
             blocked_user.delete()
-            return redirect('community_detail', data['community_id'])
+            return redirect('community_detail', data['community_id'], user_id)
         else:
             return HttpResponse("Don't unblock user, Permission denied")
         
@@ -88,7 +95,39 @@ def community_detail(request, pk, user_id):
             return redirect('community_list')
         else:
             return HttpResponse("You don't have delete permission")
+@csrf_exempt
+def subject_post(request, community_id, user_id):
+    community = get_object_or_404(Community, id=community_id)
+    if request.method == 'POST' and user_id == community.author_id_id:
+        data = JSONParser().parse(request)
+        serializer = SubjectSerializer(data=data)
+        if serializer.is_valid():
+            serializer.save()
+            return redirect('community_detail', community_id, user_id)
+    else:
+        return HttpResponse("You are't community author")
     
+@csrf_exempt
+def subject_detail(request, community_id, subject_id, user_id):
+    community = get_object_or_404(Community, id=community_id)
+    data = JSONParser().parse(request)
+    
+    if community.author_id_id == user_id:    
+        if request.method == 'PUT':
+            subject = get_object_or_404(Subject, id=subject_id)
+            subject.subject = data['subject']
+            subject.save()
+            
+            serializer = SubjectSerializer(subject)
+            return JsonResponse(serializer.data, safe=False)
+        
+        elif request.method == 'DELETE':
+            subject = get_object_or_404(Subject, id=subject_id)
+            subject.delete()
+            return redirect('community_detail', community_id, user_id)   
+    else:
+        return HttpResponse("You are't community author")
+
 @csrf_exempt
 def post_list(request, community_id):
     if request.method == 'GET':
@@ -98,7 +137,13 @@ def post_list(request, community_id):
     
     elif request.method == 'POST':
         data = JSONParser().parse(request)
-        filter 
+        if community_id != data['community_id']:
+            return HttpResponse('Wrong community_id')
+        
+        subject = get_object_or_404(Subject, id=data['subject_id'])
+        if community_id != subject.id:
+            return HttpResponse("Don't finde subject")
+        
         serializer = PostSerializer(data=data)
         if serializer.is_valid():
             serializer.save()
@@ -126,7 +171,7 @@ def post_detail(request, community_id, pk, user_id):
             return HttpResponse("you don't have delete permission")
 
 @csrf_exempt
-def comment_create(request, community_id, pk):
+def comment_list(request, community_id, pk):
     if request.method == 'POST':
         data = JSONParser().parse(request)
         serializer = CommentSerializer(data=data)
@@ -136,7 +181,7 @@ def comment_create(request, community_id, pk):
         return JsonResponse(serializer.errors, status=400)
         
 @csrf_exempt
-def comment_delete(request, user_id, pk):
+def comment_detail(request, user_id, pk):
     comment = get_object_or_404(Comment, id=pk, user_id=user_id)
     post = get_object_or_404(Post, id=comment.post_id_id)
     post_id = post.id

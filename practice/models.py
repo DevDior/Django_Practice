@@ -25,11 +25,11 @@ class Community(models.Model):
 class Blocked_User(models.Model):
     community_id = models.ForeignKey('Community', on_delete=models.CASCADE, related_name='blocked_users', db_column='community_id')
     blocked_user_id = models.ForeignKey('User', on_delete=models.CASCADE, db_column='user_id')
-    
+
 class Subject(models.Model):
     community_id = models.ForeignKey('Community', on_delete=models.CASCADE, related_name='subjects', db_column='community_id')
     subject = models.CharField(max_length=50)
-
+    
 class Post(models.Model):
     title = models.CharField(max_length=100)
     text = models.TextField()
@@ -37,7 +37,7 @@ class Post(models.Model):
     created_at = models.DateField(default=timezone.now)
     writer = models.ForeignKey('User', on_delete=models.CASCADE, db_column='writer')
     community_id = models.ForeignKey('Community', on_delete=models.CASCADE, related_name='posts', db_column='community_id')
-      
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, db_column='subject_id', default='')
         
 class Comment(models.Model):
     user_id = models.ForeignKey('User', on_delete=models.CASCADE, db_column='user_id')
