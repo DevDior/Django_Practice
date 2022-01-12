@@ -2,8 +2,10 @@ from django.urls import path
 from practice import views
 
 urlpatterns = [
+    # user
     path('signup', views.sign_up),
     path('user/<str:user_id>/<str:password>', views.check_user),
+    path('user_update/<str:user_id>', views.user_update),
     
     #community
     path('', views.community_list, name='community_list'),

@@ -11,7 +11,7 @@ class User(models.Model):
         ("G", "Girl"),
     ]
     
-    user_id = models.CharField(max_length=30, primary_key=True, unique=True)
+    user_id = models.CharField(max_length=30, primary_key=True)
     user_pw = models.CharField(max_length=30)
     user_email = models.CharField(max_length=128, unique=True)
     user_name = models.CharField(max_length=30)

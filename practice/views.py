@@ -1,3 +1,4 @@
+from functools import partial
 from django.http import HttpResponse
 from django.db.models.query import QuerySet
 from django.shortcuts import get_object_or_404, get_list_or_404, redirect
@@ -24,6 +25,18 @@ def check_user(request, user_id, password):
         serializer = UserSerializer(user)
         return JsonResponse(serializer.data, safe=False)
     
+@csrf_exempt
+def user_update(request, user_id):
+    if request.method == 'PUT':
+        data = JSONParser().parse(request)
+        user = get_object_or_404(User, user_id=user_id)
+        serializer = UserSerializer(user, data=data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return JsonResponse(serializer.data, safe=False)
+        else:
+            return JsonResponse(serializer.errors, status=400)
+
 @csrf_exempt
 def block(request, user_id):
     data = JSONParser().parse(request)
