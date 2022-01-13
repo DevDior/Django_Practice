@@ -9,9 +9,15 @@ class UserSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class CommentSerializer(serializers.ModelSerializer):
+    writer = serializers.SerializerMethodField()
+    
     class Meta:
         model = Comment
         fields = '__all__'
+        
+    def get_writer(self, instance):
+        writer = instance.user_id.user_nick_name + '(' + instance.user_id_id + ')'
+        return writer
         
 class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
@@ -19,9 +25,15 @@ class SubjectSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class PostSerializer(serializers.ModelSerializer):
+    writer = serializers.SerializerMethodField()
+    
     class Meta:
         model = Post
         fields = '__all__'
+        
+    def get_writer(self, instance):
+        writer = instance.user_id.user_nick_name + '(' + instance.user_id_id + ')'
+        return writer
         
     def to_representation(self, instance):
         response = super().to_representation(instance)

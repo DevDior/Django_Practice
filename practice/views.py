@@ -53,7 +53,7 @@ def block(request, user_id):
             if user_id == data['blocked_user_id']:
                 return HttpResponse("Please cherish yourself.")
         
-            posts = Post.objects.filter(writer_id=data['blocked_user_id'], community_id_id=data['community_id'])
+            posts = Post.objects.filter(user_id_id=data['blocked_user_id'], community_id_id=data['community_id'])
             comments = Comment.objects.filter(user_id=data['blocked_user_id'], post_id__community_id_id=data['community_id'])
             posts.delete()
             comments.delete()
@@ -177,7 +177,7 @@ def post_detail(request, community_id, pk, user_id):
     
     elif request.method == 'DELETE':
         post = get_object_or_404(Post, id=pk)
-        if post.writer_id == user_id or post.community_id.author_id_id == user_id:
+        if post.user_id_id == user_id or post.community_id.author_id_id == user_id:
             post.delete()
             return redirect('post_list', community_id)
         else:
